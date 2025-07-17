@@ -1,0 +1,310 @@
+	device zxspectrum48
+	define debug 1
+; ALF rom generator
+	lua ALLPASS
+	function alftext (text)
+		local rd="‡·‚„‰Â∏ÊÁËÈÍÎÏÌÓÔÒÚÛÙıˆ˜¯˘˙˚¸˝˛ˇ¿¡¬√ƒ≈®∆«»… ÀÃÕŒœ–—“”‘’÷◊ÿŸ⁄€‹›ﬁﬂ"
+		local ed="ABWGDEEVZIJKLMNOPRSTUFHC^[]XYX\@QABWGDEEVZIJKLMNOPRSTUFHC^[]XYX\@Q"
+		local ret=""
+		for i=1,string.len(text) do
+			local nextchar=string.sub(text,i,i)
+			local element=string.find(rd,nextchar,1,1)
+			if not (element==nil) then
+				nextchar=string.sub(ed,element,element)
+			end
+			ret=ret..nextchar
+		end
+		return string.upper (ret)
+	end
+	function filesize (file)
+	debug ("check file "..file)
+	if not sj.file_exists(file) then
+		debug ("file does not exist "..file)
+		sj.exit(0)
+	end
+	local fl=io.open(file,"r")
+	local len=fl:seek("end")
+	fl:close()
+	return len
+	end
+	function debug (text)
+		if sj.get_define("debug")=="1" then
+			print (text)
+		end
+	end
+	local configf=io.open("res\\config","r")
+	local maincfg=configf:read("*l")
+	local outs={}
+	local bank=128
+	local banks={}
+	local texts={}
+	glue="@copy /b "
+	local gm={}
+	local fs={}
+	local cur=0
+	local mode=0
+	local games=0
+	local dirs=0
+	local curgame=0
+	local curdir=0
+	for pathfiles in io.lines(maincfg) do
+		if string.sub(pathfiles,1,6)=="[cart=" then
+			cart=string.sub(pathfiles,7,-2)
+			debug (string.sub("\n--------------------------------------------------------------------------------",1,string.len(cart)+35).."\n|compilation will stored in file "..cart..string.sub("|\n--------------------------------------------------------------------------------",1,string.len(cart)+36))
+		elseif string.find(pathfiles,"[ ]*[;#]")==nil then
+				local pathc=string.sub(pathfiles,1,string.find(pathfiles,"([%a%d%_]*.ini)")-1)
+				debug ("\ndirectory "..pathc)
+				for line in io.lines(pathfiles) do
+					line=string.gsub (line,"<path>",pathc)
+					if not (string.find(line,"[;#]")==nil) then
+						line=string.sub (line,1,string.find(line,"[;#]")-1)
+					end
+					if string.len(line)==0 then
+
+					elseif string.sub(line,1,11)=="staticbank:" then
+						local bankp=tonumber(string.sub(line,12,string.find(line,"=")-1))
+						local pathp=string.sub(line,string.find(line,"=")+1,-1)
+						debug ("bank "..(bankp).." from file "..pathp)
+						banks[bankp]=pathp
+					elseif string.sub(line,1,5)=="game=" then
+						curgame=games
+						games=games+1
+						gm[curgame]={}
+						gm[curgame].name=string.sub(line,6,-1)
+						curdir=dirs
+						fs[curdir]={}
+						fs[curdir].name=gm[curgame].name
+						fs[curdir].blocks=0
+						fs[curdir].block={}
+						debug ("\nfound game "..gm[curgame].name.."\n")
+					elseif string.sub(line,1,9)=="menuname=" then
+						local printname=string.sub(line,10,-1)
+						if not (string.sub(printname,1,1)==" ") then
+							printname=" "..printname
+						end
+						gm[curgame].printname=alftext(printname.."            ")
+						debug ("printname for game "..gm[curgame].name..": "..gm[curgame].printname)
+					elseif string.sub(line,1,9)=="mainfile=" then
+						gm[curgame].path=string.sub(line,10,-1)
+						debug ("main file for game "..gm[curgame].name..": "..gm[curgame].path)
+						gm[curgame].len=filesize(gm[curgame].path)
+					elseif string.sub(line,1,9)=="workbank=" then
+						gm[curgame].startbank=tonumber(string.sub(line,10,-1))
+					elseif string.sub(line,1,5)=="text=" then
+						local pathp=string.sub(line,6,-1)
+						debug ("text file for "..gm[curgame].name.." from file: "..pathp)
+						texts[curgame]=pathp
+					elseif string.sub(line,1,9)=="loadaddr=" then
+						gm[curgame].begin=tonumber(string.sub(line,10,-1))
+					elseif string.sub(line,1,10)=="startaddr=" then
+						gm[curgame].start=tonumber(string.sub(line,11,-1))
+					elseif string.sub(line,1,8)=="dirname=" then
+						fs[curdir].name=string.sub(line,9,-1)
+					elseif string.sub(line,1,5)=="file=" then
+						dirs=curdir+1
+						fs[curdir].block[fs[curdir].blocks]={}
+						fs[curdir].block[fs[curdir].blocks].name=string.sub(line,6,-1)
+						debug ("file "..fs[curdir].block[fs[curdir].blocks].name)
+						fs[curdir].block[fs[curdir].blocks].len=filesize(fs[curdir].block[fs[curdir].blocks].name)
+						fs[curdir].blocks=fs[curdir].blocks+1
+					else
+						debug ("unknow line: "..line.." line len "..string.len(line))
+					end
+				end
+		end
+	end
+	fs.progs=dirs
+
+	_pc ("org #0000")
+	_pc ("db #53")	
+
+	for g=0,games-1 do
+	local nameaddr=sj.current_address
+	_pc ("db \""..gm[g].printname.."\"")
+	_pc ("org "..nameaddr+13) 
+	_pc ("db "..gm[g].name.."1bnk")
+	_pc ("dw "..gm[g].name.."1beg")
+	_pc ("dw "..gm[g].name.."1dst")
+	_pc ("dw "..gm[g].name.."1len")
+	end
+	_pc ("db #ff")
+	if fs.progs>0 then
+		debug("###############################\n    creating filesystem\n###############################\n")
+		_pl ("progs	equ "..fs.progs)
+		_pc ("include \"res\\filesystem.a80\"")
+		_pl ("prog_tab")
+		for cur=0,fs.progs-1 do
+			_pc ("db \""..fs[cur].name..string.sub("        ",1,tonumber(sj.get_define("namelen"))-string.len(fs[cur].name)).."\"")
+			_pc ("dw "..fs[cur].name.."_fstab")
+		end
+		for cur=0,fs.progs-1 do
+			_pl (fs[cur].name.."_fstab")
+			for fat=0,fs[cur].blocks-1 do
+				_pc ("db "..fs[cur].name.."_flbnk"..fat.."_bl"..0)
+				_pc ("dw "..fs[cur].name.."_fllen"..fat.."_bl"..0)
+				_pc ("dw "..fs[cur].name.."_flsrc"..fat.."_bl"..0)
+			end
+		end
+		for cur=0,fs.progs-1 do
+			debug("directory "..fs[cur].name.."\n")
+			for fat=0,fs[cur].blocks-1 do
+				debug("file "..fs[cur].block[fat].name.."\n")
+				local index=0
+				local curblock=0
+				local ofs=0
+				local plus=0
+				while (ofs<fs[cur].block[fat].len) do
+					free=16384-sj.current_address
+					debug ("fragment "..fs[cur].block[fat].name.." "..index)
+					if (free<6 and bank>128) or (free<9 and bank==128) then
+						if bank==128 then
+							_pc ("ds #4000-3-$")
+							_pc ("jp loadfile")
+						else
+							_pc ("ds #4000-$")
+						end
+						_pc ("savebin \"rom"..bank..".bin\",#0000,#4000")
+						glue=glue.."rom"..bank..".bin+"
+			 			while (type(banks[bank+1])=="string") do
+			 				bank=bank+1
+			 				_pc ("org #0000")
+			 				if not (filesize(banks[bank])==16384) then
+			 					debug ("bank file "..banks[bank].." not #4000 size")
+			 					sj.exit(0)
+			 				end
+			 				_pc ("incbin \""..banks[bank].."\",#0000,#4000")
+			 				_pc ("savebin \"rom"..bank..".bin\",#0000,#4000")
+							glue=glue.."rom"..bank..".bin+"
+						end
+						_pc ("org #0000")
+						_pc ("db #00")
+						bank=bank+1
+						free=16384-sj.current_address
+					end
+					debug ("free "..free)
+					if bank==128 then
+						plus=3
+					else
+						plus=0
+					end
+					if fs[cur].block[fat].len-ofs+1+plus<=free then
+						curblock=fs[cur].block[fat].len-ofs
+						debug ("finalize "..curblock)
+						_pl (fs[cur].name.."_flbnk"..fat.."_bl"..index.."	equ "..bank)
+						_pl (fs[cur].name.."_flsrc"..fat.."_bl"..index)
+						_pc ("incbin \""..fs[cur].block[fat].name.."\","..ofs..","..curblock)
+						_pl (fs[cur].name.."_fllen"..fat.."_bl"..index.."	equ $-"..fs[cur].name.."_flsrc"..fat.."_bl"..index)
+						_pc ("db 0")
+					else
+						curblock=free-5-plus
+						debug ("current block "..curblock)
+						_pl (fs[cur].name.."_flbnk"..fat.."_bl"..index.."	equ "..bank)
+						_pl (fs[cur].name.."_flsrc"..fat.."_bl"..index)
+						_pc ("incbin \""..fs[cur].block[fat].name.."\","..ofs..","..curblock)
+						_pl (fs[cur].name.."_fllen"..fat.."_bl"..index.."	equ $-"..fs[cur].name.."_flsrc"..fat.."_bl"..index)
+						_pc ("db "..fs[cur].name.."_flbnk"..fat.."_bl"..index+1)
+						_pc ("dw "..fs[cur].name.."_fllen"..fat.."_bl"..index+1)
+						_pc ("dw "..fs[cur].name.."_flsrc"..fat.."_bl"..index+1)
+					end
+					index=index+1
+					ofs=ofs+curblock
+					debug ("bank "..bank.." current address "..sj.current_address.." file offset "..ofs.." from total "..fs[cur].block[fat].len.."\n")
+				end
+			end
+		end
+	end
+
+
+	for g=0,games-1 do
+		local index=1
+		if 16384-sj.current_address<13+1+756 then
+			_pc ("savebin \"rom"..bank..".bin\",#0000,#4000")
+			glue=glue.."rom"..bank..".bin+"
+ 			while (type(banks[bank+1])=="string") do
+ 				bank=bank+1
+ 				_pc ("org #0000")
+ 				if not (filesize(banks[bank])==16384) then
+ 					debug ("bank file "..banks[bank].." not #4000 size")
+					sj.exit(0)
+ 				end
+ 				_pc ("incbin \""..banks[bank].."\",#0000,#4000")
+ 				_pc ("savebin \"rom"..bank..".bin\",#0000,#4000")
+				glue=glue.."rom"..bank..".bin+"
+			end
+			_pc ("org #0000")
+			_pc ("db #00")
+			bank=bank+1
+		end
+		if type(texts[g])=="string" then
+			local textstart=sj.current_address
+			_pc ("ds #2f4,\" \"")
+			_pc ("org "..textstart)
+			_pc ("incbin \""..texts[g].."\"")
+			_pc ("org #2f4+"..textstart)
+
+		else
+			_pc ("ds #2f4,\" \"")
+		end
+		local ofs=0
+		while (ofs<gm[g].len) do
+			curblock=16384-sj.current_address-13
+			if gm[g].len-ofs>curblock then
+			debug (gm[g].name.." "..index.." "..bank.." "..curblock)
+				_pl (gm[g].name..index.."bnk	equ "..bank)
+				_pl (gm[g].name..index.."dst	equ "..gm[g].begin+ofs)
+				_pl (gm[g].name..index.."beg")
+				_pc ("incbin \""..gm[g].path.."\","..ofs..","..curblock)
+				_pl (gm[g].name..index.."len	equ $-"..gm[g].name..index.."beg")
+				_pc ("nop")
+				_pc ("nop")
+				_pc ("ld a,"..gm[g].name..(index+1).."bnk")
+				_pc ("ld hl,"..gm[g].name..(index+1).."beg")
+				_pc ("ld de,"..gm[g].name..(index+1).."dst")
+				_pc ("ld bc,"..gm[g].name..(index+1).."len")
+				index=index+1
+				ofs=ofs+curblock
+			else
+			debug (gm[g].name.." "..index.." "..bank.." "..(gm[g].len-ofs))
+				_pl (gm[g].name..index.."bnk	equ "..bank)
+				_pl (gm[g].name..index.."dst	equ "..gm[g].begin+ofs)
+				_pl (gm[g].name..index.."beg")
+				_pc ("incbin \""..gm[g].path.."\","..ofs)
+				_pl (gm[g].name..index.."len	equ $-"..gm[g].name..index.."beg")
+				_pc ("ld a,#e9")
+				_pc ("ld (#4002),a")
+				_pc ("ld a,"..gm[g].startbank)
+				_pc ("ld hl,"..gm[g].start)
+				_pc ("jp #4000")
+				ofs=gm[g].len
+				debug (sj.current_address)
+			end
+			if (16384-sj.current_address<13) then do
+				_pc ("savebin \"rom"..bank..".bin\",#0000,#4000")
+				glue=glue.."rom"..bank..".bin+"
+	 			while (type(banks[bank+1])=="string") do
+	 				bank=bank+1
+	 				_pc ("org #0000")
+	 				_pc ("incbin \""..banks[bank].."\",#0000,#4000")
+	 				if not (filesize(banks[bank])==16384) then
+	 					debug ("bank file "..banks[bank].." not #4000 size")
+	 					sj.exit(0)
+	 				end
+	 				_pc ("savebin \"rom"..bank..".bin\",#0000,#4000")
+					glue=glue.."rom"..bank..".bin+"
+				end
+				_pc ("org #0000")
+				_pc ("db #00")
+				bank=bank+1
+			end
+
+		end
+	end
+	end
+	_pc ("savebin \"rom"..bank..".bin\",#0000,#4000")
+	glue=glue.."rom"..bank..".bin "..cart
+	endlua
+	lua
+	debug ("\nbank files generation complete\nprocess for "..cart.."\n")
+	os.execute(glue)
+	os.execute("erase rom*.bin")
+	endlua

@@ -1,0 +1,157 @@
+; 	org #8000
+; 	di
+; 	jr $
+; 	ld de,#c000
+; 	ld bc,#501
+; 	ld a,0
+; 	call load
+; 	jr $
+; load
+; 	push af
+; 	ld a,#80
+; 	out (#5f),a
+; 	pop af
+; 	call loadfile
+; 	db "testprg"
+; 	ld a,#01
+; 	out (#5f),a
+; 	ret
+	define namelen 8
+copy
+	push hl
+	ld hl,-3
+	add hl,sp
+	ld (hl),#c9
+	dec hl
+	ld (hl),#f1
+	dec hl
+	ld (hl),#5f
+	dec hl
+	ld (hl),#d3
+	dec hl
+	ld (hl),#80
+	dec hl
+	ld (hl),#3e
+	dec hl
+	ld (hl),#6f
+	dec hl
+	ld (hl),#66
+	dec hl
+	ld (hl),#23
+	dec hl
+	ld (hl),#7e
+	dec hl
+	ld (hl),#23
+	dec hl
+	ld (hl),#46
+	dec hl
+	ld (hl),#23
+	dec hl
+	ld (hl),#4e
+	dec hl
+	ld (hl),#f5
+	dec hl
+	ld (hl),#23
+	dec hl
+	ld (hl),#7e
+	dec hl
+	ld (hl),#b0
+	dec hl
+	ld (hl),#ed
+	dec hl
+	ld (hl),#5f
+	dec hl
+	ld (hl),#d3
+	dec hl
+	ld (hl),#e1
+	jp (hl)
+; 	pop hl
+; 	out (#5f),a
+; 	ldir
+;	ld a,(hl)
+;	inc hl
+;	push af
+; 	ld c,(hl)
+; 	inc hl
+; 	ld b,(hl)
+; 	inc hl
+; 	ld a,(hl)
+; 	inc hl
+; 	ld h,(hl)
+; 	ld l,a
+; 	ld a,#80
+; 	out (#5f),a
+; 	pop af
+; 	ret
+;-----------------------------
+
+;	len bytes
+;	bank
+;	begin addr
+loadfile
+; загрузка файла a, по адресу de, длиной bc
+; нужно 16 байт на стеке
+	pop hl
+	push de,af
+	ld de,prog_tab	; поиск идентификатора программы
+	ld c,progs
+.srh2
+	ld b,namelen
+.srh1
+	ld a,(de)
+	cp (hl)
+	inc hl
+	inc de
+	jr z,.l1
+.inc1
+	inc de
+	inc hl
+	djnz .inc1
+	dec hl
+	dec c
+	jr z,.exit
+	ld bc,-namelen
+	add hl,bc
+	inc de
+	jr .srh2
+.l1	
+	djnz .srh1
+	pop af
+	ex (sp),hl
+	ex de,hl
+	push af
+	ld a,(hl)
+	inc hl
+	ld h,(hl)
+	ld l,a
+	pop af
+.srhpart
+	or a
+	jr z,.nextpart
+	ld bc,5
+	add hl,bc
+	dec a
+	jr .srhpart
+.exit
+	pop af,de
+	jp (hl)
+.nextpart
+	ld a,(hl)
+	or a
+	ret z
+	push af
+	inc hl
+	ld c,(hl)
+	inc hl
+	ld b,(hl)
+	inc hl
+	ld a,(hl)
+	inc hl
+	ld h,(hl)
+	ld l,a
+	pop af
+.nextpart2
+	call copy
+	or a
+	ret z
+	jr .nextpart2
