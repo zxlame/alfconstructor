@@ -1,0 +1,86 @@
+	device zxspectrum48
+	org #6400
+	incbin "amc1_4.bin"
+;----------------------
+;menu
+	org #a138
+	xor a
+	ld (#b07a),a	; 1 player
+loop
+	ld hl,#a52c
+	call #a4ca
+	in a,(#1f)
+	bit 4,a
+	ret nz
+	cp %00100001
+	jp nz,loop
+	ld a,(cheat)
+	xor 1
+	ld (cheat),a
+	inc a
+;lives
+	ld a,#35
+	jr z,.nc1
+	ld a,#b7
+.nc1
+	ld (#9fa2),a
+;time
+	ld a,#0f
+	jr z,.nc2
+	ld a,#00
+.nc2
+	ld (#b028),a
+;
+	ld a,#af
+	jr z,.nc3
+	ld a,#00
+.nc3
+	ld (#7843),a
+;
+	jr loop
+	ds #a284-$
+;--------------------
+;key settings
+	org #a0a8
+	db #02,0,#01,0,#08,0,#04,0,#10,0,#20,0,#40,0,#80,0
+;-------------------
+;anykey
+	org #a002
+	in a,(#1f)
+	xor #a0
+	ret
+	ds #a009-$
+;-------------------
+;menu keys
+	org #a009
+	in a,(#1f)
+	xor #5f
+	add a
+	ld b,a
+	in a,(#fe)
+	and #01
+	or b
+	ret
+	ds #a018-$
+;--------------------
+;keyboard inkey
+	org #a029
+	in a,(#1f)
+	xor #5f
+	ds #a032-$
+;--------------------
+;copy keyboard settings
+	org #a0e2
+	ret
+;--------------------
+;menu text
+	org #a52c
+	db #87,#ee,"ASTRO MARINE CORPS",#fe
+	db #c0,#f0,"PROGRAM AND GRAPHICS PABLO ARIZA",#fe
+	db #62,#ff,"(C) 1989 CREEPS"
+	org #a583
+	db #ca,#f9,"FIRE TO START",#ff
+cheat	equ $-1
+	db #e5,#f1,"CHEAT ACTIVATED",#ff
+	savebin "../amc1.bin",#6400,#9400
+	savesna "amc1.sna",#ee00

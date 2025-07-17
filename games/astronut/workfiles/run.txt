@@ -1,0 +1,4 @@
+load scr
+load 5b00,ff
+load 9b46,64ba
+run 9bc7

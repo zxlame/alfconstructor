@@ -1,0 +1,3 @@
+load scr
+load code 25856 ,37480
+run 25856 

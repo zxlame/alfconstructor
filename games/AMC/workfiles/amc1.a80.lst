@@ -1,0 +1,101 @@
+01   0000             	device zxspectrum48
+02   0000             	org #6400
+03   6400             	incbin "amc1_4.bin"
+04   F800             ;----------------------
+05   F800             ;menu
+06   F800             	org #a138
+07   A138 AF          	xor a
+08   A139 32 7A B0    	ld (#b07a),a	; 1 player
+09   A13C             loop
+10   A13C 21 2C A5    	ld hl,#a52c
+11   A13F CD CA A4    	call #a4ca
+12   A142 DB 1F       	in a,(#1f)
+13   A144 CB 67       	bit 4,a
+14   A146 C0          	ret nz
+15   A147 FE 21       	cp %00100001
+16   A149 C2 3C A1    	jp nz,loop
+17   A14C 3A 92 A5    	ld a,(cheat)
+18   A14F EE 01       	xor 1
+19   A151 32 92 A5    	ld (cheat),a
+20   A154 3C          	inc a
+21   A155             ;lives
+22   A155 3E 35       	ld a,#35
+23   A157 28 02       	jr z,.nc1
+24   A159 3E B7       	ld a,#b7
+25   A15B             .nc1
+26   A15B 32 A2 9F    	ld (#9fa2),a
+27   A15E             ;time
+28   A15E 3E 0F       	ld a,#0f
+29   A160 28 02       	jr z,.nc2
+30   A162 3E 00       	ld a,#00
+31   A164             .nc2
+32   A164 32 28 B0    	ld (#b028),a
+33   A167             ;
+34   A167 3E AF       	ld a,#af
+35   A169 28 02       	jr z,.nc3
+36   A16B 3E 00       	ld a,#00
+37   A16D             .nc3
+38   A16D 32 43 78    	ld (#7843),a
+39   A170             ;
+40   A170 18 CA       	jr loop
+41   A172 00          	ds #a284-$
+42   A284             ;--------------------
+43   A284             ;key settings
+44   A284             	org #a0a8
+45   A0A8             	db #02,0,#01,0,#08,0,#04,0,#10,0,#20,0,#40,0,#80,0
+45   A0A8 02000100080004001000200040008000
+46   A0B8             ;-------------------
+47   A0B8             ;anykey
+48   A0B8             	org #a002
+49   A002 DB 1F       	in a,(#1f)
+50   A004 EE A0       	xor #a0
+51   A006 C9          	ret
+52   A007 00          	ds #a009-$
+53   A009             ;-------------------
+54   A009             ;menu keys
+55   A009             	org #a009
+56   A009 DB 1F       	in a,(#1f)
+57   A00B EE 5F       	xor #5f
+58   A00D 87          	add a
+59   A00E 47          	ld b,a
+60   A00F DB FE       	in a,(#fe)
+61   A011 E6 01       	and #01
+62   A013 B0          	or b
+63   A014 C9          	ret
+64   A015 00          	ds #a018-$
+65   A018             ;--------------------
+66   A018             ;keyboard inkey
+67   A018             	org #a029
+68   A029 DB 1F       	in a,(#1f)
+69   A02B EE 5F       	xor #5f
+70   A02D 00          	ds #a032-$
+71   A032             ;--------------------
+72   A032             ;copy keyboard settings
+73   A032             	org #a0e2
+74   A0E2 C9          	ret
+75   A0E3             ;--------------------
+76   A0E3             ;menu text
+77   A0E3             	org #a52c
+78   A52C             	db #87,#ee,"ASTRO MARINE CORPS",#fe
+78   A52C 87EE415354524F204D4152494E4520434F525053FE
+79   A541             	db #c0,#f0,"PROGRAM AND GRAPHICS PABLO ARIZA",#fe
+79   A541 C0F050524F4752414D20414E44204752415048494353205041424C4F20415249
+79   A561 5A41FE
+80   A564             	db #62,#ff,"(C) 1989 CREEPS"
+80   A564 62FF284329203139383920435245455053
+81   A575             	org #a583
+82   A583             	db #ca,#f9,"FIRE TO START",#ff
+82   A583 CAF94649524520544F205354415254FF
+83   A593             cheat	equ $-1
+84   A593             	db #e5,#f1,"CHEAT ACTIVATED",#ff
+84   A593 E5F1434845415420414354495641544544FF
+85   A5A5             	savebin "amc1.bin",#6400,#9400
+86   A5A5             	savesna "amc1.sna",#ee00
+
+Value    Label
+------ - -----------------------------------------------------------
+0xA13C   loop
+0xA592   cheat
+0xA15B   loop.nc1
+0xA164   loop.nc2
+0xA16D   loop.nc3

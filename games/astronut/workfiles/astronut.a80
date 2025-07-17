@@ -1,0 +1,94 @@
+	device zxspectrum48
+	org #9b46
+	incbin "astronut_1.bin"
+	org #c8a1
+	dw #9d4b
+;---------------------
+	org #b5b7
+	in a,(#1f)
+	xor %10100000
+	bit 4,a
+	ret z
+;-------------------
+;title music
+	org #be55
+	in a,(#1f)
+	xor %10100000
+	sub 1
+	sbc a,a
+	ret
+;----------------------
+;level menu
+	org #9b5d
+	in a,(#1f)
+	xor %10100000
+	jr z,#9b58
+	res 7,(hl)
+	bit 4,a
+	jr z,.l0
+	ld a,l
+	sub #48
+	ret
+.l0
+	rra
+	jr nc,.l1
+	inc hl
+.l1
+	rra
+	jr nc,.l2
+	dec hl
+.l2
+	ld a,l
+	cp #47
+	jr nz,.l3
+	ld l,#56
+.l3
+	cp #57
+	jr nz,.l4
+	ld l,#48
+.l4
+	jr #9b58
+	ds #9b8c-$,0
+;------------------------
+;music on/off
+	org #9b95
+musonoff
+	in a,(#1f)
+	xor %10100000
+	and #44
+	jr z,.l1
+.l2
+	in a,(#1f)
+	xor %10100000
+	and #8c
+	jr nz,.l2
+	ld a,(#5bd5)
+	xor #01
+	ld (#5bd5),a
+.l1
+	ld a,(#5bd5)
+	or a
+	jp z,#d232
+	ld a,#02
+	ld bc,#07d0
+	jp #d106
+;------------------------
+;select level text
+	org #9cc6
+	db #8c,#85,#86,#94,#60,#92,#89,#87,#88,#94
+	org #9ced
+	db #86,#89,#92,#85,#60
+;------------------------
+;start	
+	org #9a30
+	di
+	ld sp,#0000
+	ld hl,data
+	ld de,#5b00
+	ld bc,#00ff
+	ldir
+	jp #aa50
+data
+	incbin "astronut_0.bin"
+	savebin "astronut_alf.bin",#9a30,#a500
+	savesna "astronut.sna",#9a30

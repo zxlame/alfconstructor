@@ -1,0 +1,42 @@
+01   0000             	device zxspectrum48
+02   0000             	org #6500
+03   6500             	incbin "BCBill1.bin"
+04   F768             	org #6500
+05   6500             start
+06   6500             ;----------------------
+07   6500             ;any key cf
+08   6500             	org #d052
+09   D052 C5          	push bc
+10   D053 47          	ld b,a
+11   D054 DB FE       	in a,(#fe)
+12   D056 E6 40       	and %01000000
+13   D058 0F          	rrca
+14   D059 4F          	ld c,a
+15   D05A DB FE       	in a,(#fe)
+16   D05C 2F          	cpl
+17   D05D E6 1F       	and #1f
+18   D05F B1          	or c
+19   D060 4F          	ld c,a
+20   D061 DB 1F       	in a,(#1f)
+21   D063 EE A0       	xor %10100000
+22   D065 B1          	or c
+23   D066 E6 10       	and %00010000
+24   D068 C6 FF       	add #ff
+25   D06A 78          	ld a,b
+26   D06B C1          	pop bc
+27   D06C C9          	ret
+28   D06D 00          	ds #d075-$,0
+29   D075             ; ;------------------------
+30   D075             ; ;keyboard scr
+31   D075             ; 	org #e108
+32   D075             ; 	ds #f30d-$,0
+33   D075             ; ;------------------------
+34   D075             ; ;control select
+35   D075             ; 	org #e013
+36   D075             	
+37   D075             	savebin "bcbill_alf.bin",#6500,#9268
+38   D075             	savesna "bcbill.sna",start
+
+Value    Label
+------ - -----------------------------------------------------------
+0x6500   start

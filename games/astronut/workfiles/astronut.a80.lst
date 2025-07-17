@@ -1,0 +1,109 @@
+01   0000             	device zxspectrum48
+02   0000             	org #9b46
+03   9B46             	incbin "astronut_1.bin"
+04   0000             	org #c8a1
+05   C8A1 4B 9D       	dw #9d4b
+06   C8A3             ;---------------------
+07   C8A3             	org #b5b7
+08   B5B7 DB 1F       	in a,(#1f)
+09   B5B9 EE A0       	xor %10100000
+10   B5BB CB 67       	bit 4,a
+11   B5BD C8          	ret z
+12   B5BE             ;-------------------
+13   B5BE             ;title music
+14   B5BE             	org #be55
+15   BE55 DB 1F       	in a,(#1f)
+16   BE57 EE A0       	xor %10100000
+17   BE59 D6 01       	sub 1
+18   BE5B 9F          	sbc a,a
+19   BE5C C9          	ret
+20   BE5D             ;----------------------
+21   BE5D             ;level menu
+22   BE5D             	org #9b5d
+23   9B5D DB 1F       	in a,(#1f)
+24   9B5F EE A0       	xor %10100000
+25   9B61 28 F5       	jr z,#9b58
+26   9B63 CB BE       	res 7,(hl)
+27   9B65 CB 67       	bit 4,a
+28   9B67 28 04       	jr z,.l0
+29   9B69 7D          	ld a,l
+30   9B6A D6 48       	sub #48
+31   9B6C C9          	ret
+32   9B6D             .l0
+33   9B6D 1F          	rra
+34   9B6E 30 01       	jr nc,.l1
+35   9B70 23          	inc hl
+36   9B71             .l1
+37   9B71 1F          	rra
+38   9B72 30 01       	jr nc,.l2
+39   9B74 2B          	dec hl
+40   9B75             .l2
+41   9B75 7D          	ld a,l
+42   9B76 FE 47       	cp #47
+43   9B78 20 02       	jr nz,.l3
+44   9B7A 2E 56       	ld l,#56
+45   9B7C             .l3
+46   9B7C FE 57       	cp #57
+47   9B7E 20 02       	jr nz,.l4
+48   9B80 2E 48       	ld l,#48
+49   9B82             .l4
+50   9B82 18 D4       	jr #9b58
+51   9B84 00          	ds #9b8c-$,0
+52   9B8C             ;------------------------
+53   9B8C             ;music on/off
+54   9B8C             	org #9b95
+55   9B95             musonoff
+56   9B95 DB 1F       	in a,(#1f)
+57   9B97 EE A0       	xor %10100000
+58   9B99 E6 44       	and #44
+59   9B9B 28 10       	jr z,.l1
+60   9B9D             .l2
+61   9B9D DB 1F       	in a,(#1f)
+62   9B9F EE A0       	xor %10100000
+63   9BA1 E6 8C       	and #8c
+64   9BA3 20 F8       	jr nz,.l2
+65   9BA5 3A D5 5B    	ld a,(#5bd5)
+66   9BA8 EE 01       	xor #01
+67   9BAA 32 D5 5B    	ld (#5bd5),a
+68   9BAD             .l1
+69   9BAD 3A D5 5B    	ld a,(#5bd5)
+70   9BB0 B7          	or a
+71   9BB1 CA 32 D2    	jp z,#d232
+72   9BB4 3E 02       	ld a,#02
+73   9BB6 01 D0 07    	ld bc,#07d0
+74   9BB9 C3 06 D1    	jp #d106
+75   9BBC             ;------------------------
+76   9BBC             ;select level text
+77   9BBC             	org #9cc6
+78   9CC6             	db #8c,#85,#86,#94,#60,#92,#89,#87,#88,#94
+78   9CC6 8C858694609289878894
+79   9CD0             	org #9ced
+80   9CED 8689928560  	db #86,#89,#92,#85,#60
+81   9CF2             ;------------------------
+82   9CF2             ;start	
+83   9CF2             	org #9a30
+84   9A30 F3          	di
+85   9A31 31 00 00    	ld sp,#0000
+86   9A34 21 42 9A    	ld hl,data
+87   9A37 11 00 5B    	ld de,#5b00
+88   9A3A 01 FF 00    	ld bc,#00ff
+89   9A3D ED B0       	ldir
+90   9A3F C3 50 AA    	jp #aa50
+91   9A42             data
+92   9A42             	incbin "astronut_0.bin"
+93   9B41             	savebin "astronut_alf.bin",#9a30,#a500
+astronut.a80(94): warning: [SAVESNA] RAM <0x4000-0x4001> will be overriden due to 48k snapshot imperfect format.
+94   9B41             	savesna "astronut.sna",#9a30
+95   9B41             
+
+Value    Label
+------ - -----------------------------------------------------------
+0x9B6D   _.l0
+0x9B71   _.l1
+0x9B75   _.l2
+0x9B7C   _.l3
+0x9B82   _.l4
+0x9B95 X musonoff
+0x9BAD   musonoff.l1
+0x9B9D   musonoff.l2
+0x9A42   data

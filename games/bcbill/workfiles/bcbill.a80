@@ -1,0 +1,49 @@
+; 0 right
+; 1 left
+; 2 down
+; 3 up
+; 4 fire
+	device zxspectrum48
+	org #6500
+	incbin "BCBill1.bin"
+;----------------------
+;any key cf
+	org #d052
+	push bc
+	xor a
+	in a,(#fe)
+	and %01011111
+	xor %00011111
+	ld c,a
+	in a,(#1f)
+	xor %10100000
+	or c
+	add #ff
+	pop bc
+	ret
+	ds #d074-$
+ ;-----------------------
+ ;input keys
+ 	org #de72
+gameKeys
+ 	in a,(#1f)
+ 	ld c,a
+ 	and #f3
+ 	bit 3,c
+ 	jr z,.s1
+ 	or #04
+.s1
+ 	bit 2,c
+ 	jr z,.s2
+ 	or #08
+.s2
+ 	ret
+ 	ds #dfb6-$,0
+
+;------------------------
+;control select e0bf
+	org #e013
+	ret
+	ds #f30d-$,0
+	savebin "../bcbill_alf.bin",#6500,#9268
+	savesna "bcbill.sna",#6500
