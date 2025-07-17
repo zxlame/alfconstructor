@@ -1,0 +1,158 @@
+        device zxspectrum48
+
+        org #0000
+       	db #53
+menu1
+	dm " METAL MAN"
+	ds menu1+#0d-$,#20
+	db #80
+	dw start_1
+	dw #0000-len_1
+	dw len_1
+	db #ff
+mmr
+	dm " OPISANIE"
+	ds mmr+#2f4-$,#20
+start_1
+	incbin "mmr_main.bin.mlz"
+len_1	equ $-start_1
+	ld hl,#0000-len_1
+	ld de,#5b00
+        LD      A,#80
+        EX      AF,AF'
+MS      LDI
+M0      LD      BC,#2FF
+M1      EX      AF,AF'
+M1X     ADD     A,A
+        JR      NZ,M2
+        LD      A,(HL)
+        INC     HL
+        RLA
+M2      RL      C
+        JR      NC,M1X
+        EX      AF,AF'
+        DJNZ    X2
+        LD      A,2
+        SRA     C
+        JR      C,N1
+        INC     A
+        INC     C
+        JR      Z,N2
+        LD      BC,#33F
+        JR      M1
+
+X2      DJNZ    X3
+        SRL     C
+        JR      C,MS
+        INC     B
+        JR      M1
+X6
+        ADD     A,C
+N2
+        LD      BC,#4FF
+        JR      M1
+N1
+        INC     C
+        JR      NZ,M4
+        EX      AF,AF'
+        INC     B
+N5      RR      C
+        jp c,#5b00
+        RL      B
+        ADD     A,A
+        JR      NZ,N6
+        LD      A,(HL)
+        INC     HL
+        RLA
+N6      JR      NC,N5
+        EX      AF,AF'
+        ADD     A,B
+        LD      B,6
+        JR      M1
+X3
+        DJNZ    X4
+        LD      A,1
+        JR      M3
+X4      DJNZ    X5
+        INC     C
+        JR      NZ,M4
+        LD      BC,#51F
+        JR      M1
+X5
+        DJNZ    X6
+        LD      B,C
+M4      LD      C,(HL)
+        INC     HL
+M3      DEC     B
+        PUSH    HL
+        LD      L,C
+        LD      H,B
+        ADD     HL,DE
+        LD      C,A
+        LD      B,0
+        LDIR
+        POP     HL
+        JR      M0
+        ds	#4000-$,00
+        savebin "mmr_80.bin",#0000,#4000
+;----------------------------------------
+	org #0000
+	db #00
+	ld hl,data_1
+	ld de,#b300
+	incbin "DEC40.bin"
+data_1
+	incbin	"mmr_1.mlz"
+        ds	#4000-$,00
+        savebin "mmr_81.bin",#0000,#4000
+;----------------------------------------
+	org #0000
+	db #00
+	ld hl,data_2
+	ld de,#b300
+	incbin "DEC40.bin"
+data_2
+	incbin	"mmr_2.mlz"
+        ds	#4000-$,00
+        savebin "mmr_82.bin",#0000,#4000
+;----------------------------------------
+	org #0000
+	db #00
+	ld hl,data_3
+	ld de,#b300
+	incbin "DEC40.bin"
+data_3
+	incbin	"mmr_3.mlz"
+        ds	#4000-$,00
+        savebin "mmr_83.bin",#0000,#4000
+;----------------------------------------
+	org #0000
+	db #00
+	ld hl,data_4
+	ld de,#b300
+	incbin "DEC40.bin"
+data_4
+	incbin	"mmr_4.mlz"
+        ds	#4000-$,00
+        savebin "mmr_84.bin",#0000,#4000
+;----------------------------------------
+	org #0000
+	db #00
+	ld hl,data_5
+	ld de,#b300
+	incbin "DEC40.bin"
+data_5
+	incbin	"mmr_5.mlz"
+        ds	#4000-$,00
+        savebin "mmr_85.bin",#0000,#4000
+;----------------------------------------
+	org #0000
+	db #00
+        ds	#4000-$,00
+        savebin "mmr_86.bin",#0000,#4000
+;----------------------------------------
+	org #0000
+	db #00
+        ds	#4000-$,00
+        savebin "mmr_87.bin",#0000,#4000
+;----------------------------------------

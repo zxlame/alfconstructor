@@ -1,0 +1,75 @@
+01   0000             	device zxspectrum48
+02   0000             	org #6000
+03   6000             start
+04   6000             	incbin "mmr0.bin"
+05   B1E8             go
+06   B1E8 21 24 B2    	ld hl,scr
+07   B1EB 11 00 40    	ld de,#4000
+08   B1EE 01 00 1B    	ld bc,#1b00
+09   B1F1 ED B0       	ldir
+10   B1F3 11 00 5C    	ld de,#5c00
+11   B1F6 01 90 00    	ld bc,baslen
+12   B1F9 ED B0       	ldir
+13   B1FB             w1
+14   B1FB DB 1F       	in a,(#1f)
+15   B1FD EE A0       	xor #a0
+16   B1FF 20 FA       	jr nz,w1
+17   B201             w2
+18   B201 DB 1F       	in a,(#1f)
+19   B203 EE A0       	xor #a0
+20   B205 FE 81       	cp #81
+21   B207 20 06       	jr nz,s2
+22   B209 AF          	xor a
+23   B20A 32 B6 64    	ld (#64b6),a
+24   B20D 18 F2       	jr w2	
+25   B20F             s2
+26   B20F FE 10       	cp #10
+27   B211 20 EE       	jr nz,w2
+28   B213 21 58 27    	ld hl,#2758
+29   B216 D9          	exx
+30   B217 FD 21 3A 5C 	ld iy,#5c3a
+31   B21B 31 E8 5F    	ld sp,#5fe8
+32   B21E ED 56       	im 1
+33   B220 FB          	ei
+34   B221 C3 F6 7F    	jp #7ff6
+35   B224             scr
+36   B224             	incbin "mmrS.bin"
+37   CD24             bas
+38   CD24             	incbin "bas.bin"
+39   CDB4             baslen	equ $-bas
+40   CDB4             len	equ $-start
+41   CDB4             ;--------------------------
+42   CDB4             	org #7583
+43   7583             loader
+44   7583 F3          	di
+45   7584 3E 80       	ld a,#80
+46   7586 D3 5F       	out (#5f),a
+47   7588 3A 03 60    	ld a,(#6003)
+48   758B E6 7F       	and #7f
+49   758D 3D          	dec a
+50   758E 11 00 B3    	ld de,#b300
+51   7591 CD FD 3F    	call #4000-3
+52   7594             	db "metalman"
+52   7594 6D6574616C6D616E
+53   759C 3E 01       	ld a,#01
+54   759E D3 5F       	out (#5f),a
+55   75A0 FB          	ei
+56   75A1 CD 00 9C    	call #9c00
+57   75A4 C3 83 75    	jp loader
+58   75A7             
+59   75A7             	display go
+60   75A7             	savebin "../metalman_alf.bin",start,len
+61   75A7             	savesna "metalman.sna",go
+
+Value    Label
+------ - -----------------------------------------------------------
+0x6000   start
+0xB1E8   go
+0xB224   scr
+0x0090   baslen
+0xB1FB   w1
+0xB201   w2
+0xB20F   s2
+0xCD24   bas
+0x6DB4   len
+0x7583   loader

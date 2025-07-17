@@ -1,0 +1,35 @@
+	device zxspectrum48
+	org #5b00
+	incbin "mmr.bin"
+	org #5b00
+	in a,(#1f)
+	and #01
+	jr z,l1
+	xor a
+	ld (#64b6),a
+l1
+	ld a,#01
+	out (#5f),a
+	ld hl,#2758
+	exx
+	ld iy,#5c3a
+	ld sp,#5fe8
+	im 1
+	ei
+	jp #7ff6
+	org #9495
+	xor a
+	ret
+	org #7583
+loader
+	di
+	ld a,(#6003)
+	or #80
+	out (#5f),a
+	call #0001
+	ld a,#01
+	out (#5f),a
+	ei
+	call #9c00
+	jp loader
+	savebin "mmr_main.bin",#5b00,#56e8

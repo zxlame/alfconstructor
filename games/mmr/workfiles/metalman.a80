@@ -1,0 +1,78 @@
+	device zxspectrum48
+	org #6000
+start
+	incbin "mmr0.bin"
+go
+	ld hl,scr
+	ld de,#4000
+	ld bc,#1b00
+	ldir
+	ld de,#5c00
+	ld bc,baslen
+	ldir
+w1
+	in a,(#1f)
+	xor #a0
+	jr nz,w1
+w2
+	in a,(#1f)
+	xor #a0
+	cp #11
+	jr nz,s2
+	xor a
+	ld (#64b6),a
+	jr w2	
+s2
+	cp #10
+	jr nz,w2
+	ld hl,#2758
+	exx
+	ld iy,#5c3a
+	ld sp,#5fe8
+	im 1
+	ei
+	jp #7ff6
+scr
+	incbin "mmrS.bin"
+bas
+	incbin "bas.bin"
+baslen	equ $-bas
+len	equ $-start
+;--------------------------
+	org #7583
+loop
+	ld a,(#6003)
+	and #7f
+	dec a
+	ld de,#b300
+	call	loader
+	call	0x9c00
+	jr	loop
+loader
+	di
+	push	af
+	ld a,#80
+	out (#5f),a
+	pop 	af
+	call #4000-3
+	db "metalman"
+	ld a,#01
+	out (#5f),a
+	ei
+	ret
+;128 loader
+	org	0x94d6
+	ld	(lvl), a
+	org	0x94df
+	ds	0x94f1-$
+	org	0x94f7
+lvl	equ	$+1
+	ld	a,0
+	dec	a
+	ld	de,0xb300
+	call	loader
+	ds	0x9501-$
+
+	display go
+	savebin "../metalman_alf.bin",start,len
+	savesna "metalman.sna",go
