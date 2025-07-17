@@ -1,0 +1,246 @@
+        device zxspectrum48
+        org #6d60
+        incbin "exolon_2.bin"
+        org #6e17
+;60-8f	y=$0-#78+y
+;	x=$1+x
+;90-ce	x=$0-#af+x
+;	y++
+;cf-de	$0-#cf=inc+bright*#8
+;df	y=$1
+;	x=$2
+;e0	attr=$1
+;e1	repeat $1
+;e2	repeat end
+;e3	call $2$1
+;e4	
+;e5
+;e6	set font addr $2$1
+        db #e8,#01
+        db #df,#00,#08
+        db #e3,#ff,#70
+        db #e6,#e0,#d7
+        db #df,#07,#07
+        db #e0,#44
+        db "BY RAFFAELE CECCO"
+        db #df,#17,#02
+        db #d9
+        db "EXOLON COPYRIGHT 1987 HEWSON"
+        db #df,#0d,#06
+        db #dc
+        db "PRESS FIRE TO START"
+        db #d0
+        db #df,#12,#06
+	db "CURRENT MODE:"
+        db #d8
+	db "BEEPER"        
+smode	db #ff ;#78 ;#ff
+        db #fa,"AY8912",#ff
+;ROM detect (6e16)
+	org #6e16
+	db 0
+	org #6d64
+	xor a
+	call #b04b
+	.4 nop
+;
+	org #6de0
+	in a,(#1f)
+	xor #a0
+	call cheat
+	bit 4,a
+	jp nz,#758a
+	ld e,a
+	and #0c
+	ld a,e
+	jr nz,off
+	dec bc
+	ld a,b
+	or c
+	jp z,#7149
+	jr #6ddd
+off
+	in a,(#1f)
+	xor #a0
+	jr nz,off	
+	ld a,(#6e16)
+	xor #79
+	ld (#6e16),a
+	dec a
+	ld (smode),a
+	call #b04b
+	jp #6da7
+;kempston
+	org #7b97
+	db 2
+;music key
+	org #7d23
+	in a,(#1f)
+	xor #a0
+	nop
+	nop
+;highlight control
+	org #6f90
+	ret
+	org #6dbf
+	nop
+	nop
+;key input
+	org #acd1
+	in a,(#1f)
+  	xor #a0
+	ret
+;no key
+	org #ad18
+nokey
+	in a,(#1f)
+	xor #a0
+	jr nz,nokey
+	ret
+	ds #ad21-$
+;pause
+	org #ad21
+pause
+	in a,(#1f)
+	bit 6,a
+	ret z
+	bit 7,a
+	jp z,#6d60
+	call #b75e	;mute
+	ds #ad30-$
+;highscore
+	org #a0ee
+loop
+	in a,(#1f)
+	xor #a0
+	jr nz,loop
+loop2
+	in a,(#1f)
+	xor #a0
+	jr z,loop2
+	bit 4,a
+	jr z,.s1
+	ld a,e
+	cp #13
+	jr z,#a131
+	inc hl
+	inc e
+	jr .prn
+.s1
+	bit 3,a
+	jr z,.s2
+	ld a,"Z"
+	cp (hl)
+	jr nz,.l1
+	ld (hl),#1f
+.l1
+	inc (hl)
+	jr .prn
+.s2
+	bit 2,a
+	jr z,loop
+	dec (hl)
+	ld a,(hl)
+	cp " "-1
+	jr nz,.l2
+	ld (hl),"Z"
+.l2	
+.prn
+	ld a,(hl)
+	ld c,#46
+	call #ade1
+	jr loop
+
+
+
+
+
+
+
+
+
+
+
+; score
+; 	bit 4,a
+; 	jr nz,#a131
+; 	rra
+; 	jr nc,.s1
+; 	ld a,e
+; 	cp #0c
+; 	jr z,loop
+; 	dec hl
+; 	dec e
+; 	xor a
+; .s1
+; 	rra
+; 	jr nc,.s2
+; 	ld a,e
+; 	cp #13
+; 	jr z,#a0de
+; 	inc hl
+; 	inc e
+; 	xor a
+; .s2
+; 	rra
+; 	jr nc,.s3
+; 	ld a,"Z"
+; 	cp (hl)
+; 	jr nz,.l1
+; 	ld (hl),#1f
+; .l1
+; 	inc (hl)
+; 	jr .prn
+; .s3
+; 	rra
+; 	jr nc,loop
+; 	dec (hl)
+; 	ld a,(hl)
+; 	cp " "-1
+; 	jr nz,.l2
+; 	ld (hl),"Z"
+; .l2	
+; .prn
+; 	ld a,(hl)
+; 	ld c,#46
+; 	call #ade1
+; 	jr loop
+	display $
+;6fab redefine
+	org #6fab
+cheat
+	push af
+	cp %10000001
+	ld a,(#9d1d)
+	jr nz,.l1
+	xor #3d
+	ld (#9d1d),a
+.off
+	in a,(#1f)
+	xor #a0
+	jr nz,.off	
+	ld a,(#9d1d)
+.l1
+	sub #3d
+	sbc a
+	and #01
+	out (#fe),a
+	pop af
+	ret
+sndcheck
+	ld a,(#6e16)
+	or a
+	ret z
+	xor a
+	ld (#c5ea),a
+	jp #bf82
+	display #70fb-$
+	ds #70fb-$
+;7b4a kempston in game
+;bf7e
+	org #bf7e
+	jp sndcheck
+	savebin "exolon.bin",#6d60,#92a0
+        savesna "exolon.sna",#6d60
+;len 92a0
+; font d7e0

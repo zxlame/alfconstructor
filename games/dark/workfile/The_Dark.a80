@@ -1,0 +1,127 @@
+	device zxspectrum48
+LANGUAG	EQU	1	; 0=EN, 1=RU
+INTRO	EQU	1	; must be 1
+DEATH	EQU	1	; must be 1
+STLEVEL	EQU	0	; must be 0
+DEBUG	EQU	0	; must be 0
+
+	ORG	16384
+
+	INCBIN	"res\52204.spr"	; GIU frame
+	INCBIN	"res\45874.spr"	; GIU with hero portrait
+
+	SAVEBIN "gui.dat",16384,$-16384
+
+	org #4100
+guidat
+	incbin "gui.dat"
+	org #4800
+	incbin "logo.bin"
+startnew
+	ld sp,#5c00
+loop
+	call KBDJOY
+	cp %10000001
+	jr nz,.l1
+	ld a,#c9
+	ld (cheath),a
+.l1
+	and %01110000
+	jr z,loop
+	jp PROGRUN
+
+GUIFR1	EQU	24576-595-79
+GUIFR2	EQU	GUIFR1+79-23
+GUIFR3	EQU	GUIFR1+79
+
+KK	EQU	#6800
+
+VSCRHI	EQU	#60
+VSCR	EQU	VSCRHI*256
+VSCROFF	EQU	VSCRHI-#40
+VATTR	EQU	VSCR+2048*2
+VATRHI	EQU	VATTR/256
+VATROFF	EQU	VSCROFF-#08
+
+L_UMAP	EQU	#E000	; unpacked map
+
+L_8A00	EQU	VSCR+#0A00
+
+L_9687	EQU	VSCR+#1687
+L_9691	EQU	VSCR+#1691
+L_9697	EQU	VSCR+#1697
+L_9900	EQU	VSCR+#1900
+L_9901	EQU	VSCR+#1901
+
+	ORG	24576
+
+PROGBEGIN
+PROGRUN
+
+	INCLUDE "Qintro.txt"
+	display $
+	ORG	29440
+	display $
+
+MIRTAB	INCBIN "res\mirtab.dat"
+
+WALEL1	INCBIN "res\walel1.dat"
+WALEL2	INCBIN "res\walel2.dat"
+
+	INCLUDE	"Qmapdata.txt"
+
+;---ORG	31488
+
+QTABS
+	INCLUDE	"Qtabs.ASM"		; <--- labels here
+	ORG	QTABS
+	INCBIN	"res\raytab.dat"	; but real table here
+
+	INCLUDE "Qkbjoy.txt"
+	INCLUDE "Qprint.txt"
+	INCLUDE "Qworld.txt"
+	INCLUDE "QBAS5.ASM"
+	INCLUDE "Qsprdata.txt"
+
+	IF LANGUAG=0
+	INCLUDE "Qtext_en.txt"
+	ENDIF
+	IF LANGUAG=1
+	INCLUDE "Qtext_ru.txt"
+	ENDIF
+	display $
+	ORG	L_UMAP
+QSTORY3	INCBIN "res\Qstory3.hrx"
+QSTORY4 INCBIN "res\Qstory4.hrx"
+QSTORY5 INCBIN "res\Qstory5.hrx"
+
+	INCLUDE	"dehrust2.asm"
+
+;=====================================
+
+SCR_ATTR_SET3
+	LD	A,6
+	LD	BC,767
+	JP	SATRS58
+SCR_ATTR_SET2
+	LD	A,7
+	LD	BC,255
+	LD	HL,#5800+512
+	JP	SATRSET
+
+DELAY3	LD	B,3
+DELAY0	EI
+	HALT
+	DJNZ	DELAY0
+	RET
+
+;=====================================
+	display PROGBEGIN,"   ",$
+	SAVEBIN "../dark_alf.bin",#4100,$-#4100
+	SAVESNA "The_Dark.sna",startnew
+	IF LANGUAG=0
+	SAVEBIN "The_Dark_en.bin",PROGBEGIN,$-PROGBEGIN
+	ENDIF
+	IF LANGUAG=1
+	SAVEBIN "The_Dark_ru.bin",PROGBEGIN,$-PROGBEGIN
+	ENDIF

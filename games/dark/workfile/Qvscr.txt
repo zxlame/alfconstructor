@@ -1,0 +1,86 @@
+VCLEAR	LD	HL,VATTR	; очистка виртуального экрана
+	LD	DE,VATTR+1
+	LD	(HL),#0
+
+;===	LD	BC,#02FF
+;===	LDIR
+;===	RET
+
+	LD	A,34		; 34*15=510
+CLRV1
+ .15	LDI
+	DEC	A
+	JR	NZ,CLRV1
+	RET
+
+
+;--------------------------------------------------------
+; вывод двух третей
+; экранного буфера с атрибутами
+; МЕДЛЕННЫЙ ВАРИАНТ ЧЕРЕЗ LDI
+; построчно, чтобы избежать мерцания
+; (строка графики, затем строка аттрибутов)
+;--------------------------------------------------------
+
+PUTVRT
+	LD	B,16
+PUTVR1	PUSH	BC
+
+	DEC	B
+	LD	A,B
+SCROFS1	ADD	A,2	; (Mod it for Row)
+	CALL	PUTVRA
+	POP	BC
+	DJNZ	PUTVR1
+	RET
+PUTVRA
+	; вычисляем адрес на экране отдельно для физического
+	; и для виртуального экрана, чтобы можно было
+	; выводить изображение на любые строки
+
+	CALL	3742	; string idx (real scr) -> scr addr
+	INC	L	; offset from left
+	PUSH	HL	; store scr addr
+	PUSH	HL	; store scr addr
+
+	LD	A,B	; string idx in virt screen
+	CALL	3742	; A=string idx -> HL=scr addr
+	INC	L	; offset from left
+	LD	A,VSCROFF
+	ADD	A,H	; в HL - соответствующий адрес
+	LD	H,A	; «теневого» экрана
+
+	POP	DE	; restore scr addr
+
+PUTVFX	LD	B,8
+PUTVRB	PUSH	BC
+	PUSH	DE
+	PUSH	HL
+  .29	LDI
+	POP	HL
+	POP	DE
+	INC	D
+	INC	H
+	POP	BC
+	DJNZ	PUTVRB
+
+	; Перенос атрибутов
+	POP	DE		; restore scr addr
+
+	LD	A,D		; scr addr -> attr addr
+	AND	#18
+	SRA	A
+	SRA	A
+	SRA	A
+	ADD	A,#58		; real attr hi
+	LD	D,A
+
+	LD	L,E		; calc attr addr
+	LD	A,D		; in virt scr
+	ADD	A,VATROFF
+	LD	H,A
+SCROFS2	LD	BC,-64		; row offset (Mod)
+	ADD	HL,BC
+  .29	LDI
+	RET
+

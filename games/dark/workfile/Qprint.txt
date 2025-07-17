@@ -1,0 +1,121 @@
+QFONT
+	IF LANGUAG=0
+	INCBIN "res\qfont.dat"
+	ENDIF
+	IF LANGUAG=1
+	INCBIN "res\qfont_ru.dat"
+	ENDIF
+
+FONT	DEFW	QFONT-256-8*16
+
+;---------------------------------------------------------------
+;	Вывод текста. Пример использования
+;	LD    DE,TXT1	; указатель на текст, заканчивающийся #0
+;	LD    BC,#0702	; позиция YX (строка, отступ)
+;	CALL  TPRINT
+;
+;	поддерживается:
+;	- перевод строки (13), причем отступ сохраняется
+;	- двойной перевод строки (14), отступ сохраняется
+;	- позиционирование (22,ROW,COL)
+;	- установка атрибутов (15)
+;---------------------------------------------------------------
+
+PRINT	LD	A,#FF
+PRINTA	LD	(TXATTR+1),A	; clear/set attr
+	LD	A,C
+	LD	(TXTTAB+1),A	; запомним отступ колонки
+
+TXPR1	LD	A,(DE)
+	AND	A		; CP 0
+	RET	Z
+	CP	15
+	JR	Z,TXATTRSET
+	CP	14
+	JR	Z,TX2ENT
+	CP	13
+	JR	Z,TXENTR
+	CP	22
+	JR	Z,TXAT
+	PUSH	DE
+	CALL	PRINTCHAR
+	POP	DE
+	INC	DE
+	JR	TXPR1
+
+TXATTRSET
+	INC	DE
+	LD	A,(DE)
+	INC	DE
+	LD	(TXATTR+1),A
+	JR	TXPR1
+
+TX2ENT	INC	B		; перевод строки
+TXENTR	INC	B		; перевод строки
+TXTTAB	LD	A,1
+	LD	C,A		; отступ после перевода
+	INC	DE
+	JR	TXPR1
+
+TXAT	INC	DE
+	LD	A,(DE)
+	LD	B,A
+	INC	DE
+	LD	A,(DE)
+	LD	C,A
+	INC	DE
+	JR	TXPR1
+
+PRINTCHAR
+	EXA
+	LD	A,B
+	CALL	3742
+	LD	A,C
+	ADD	A,L
+	LD	L,A
+	INC	C
+	PUSH	BC
+	LD	D,H
+	LD	E,L
+	EXA	
+	LD	L,A
+	LD	H,0
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	LD	BC,(FONT)
+	ADD	HL,BC
+PRCHR	CALL	CHAR_NORMAL	; self-mod
+	POP	BC
+
+	LD	A,(TXATTR+1)	; current attr
+	CP	#FF
+	RET	Z
+
+	DEC	D
+	LD	A,D
+	AND	#18
+	SRA	A
+	SRA	A
+	SRA	A
+	ADD	A,#58	; attr hi
+	LD	D,A
+TXATTR	LD	A,2	; (var)
+	LD	(DE),A
+	RET
+
+CHAR_NORMAL
+	LD	B,8
+PRCHR1	LD	A,(HL)
+	LD	(DE),A
+	INC	D
+	INC	HL
+	DJNZ	PRCHR1
+	RET
+
+PRINTX	PUSH	BC
+	PUSH	DE
+	CALL	PRINT
+	POP	DE
+	POP	BC
+	RET

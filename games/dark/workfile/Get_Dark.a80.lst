@@ -1,0 +1,253 @@
+001   0000             	device zxspectrum48
+002   0000             	ORG	24576
+003   6000             
+004   6000             PROGBEGIN
+005   6000             PROGRUN
+006   6000 21 00 58    	LD	HL,#5800
+007   6003 11 01 58    	LD	DE,#5801
+008   6006 01 FF 02    	LD	BC,#2ff
+009   6009 36 00       	LD	(HL),0
+010   600B ED B0       	LDIR
+011   600D             
+012   600D 21 55 61    	LD	HL,QLOGO
+013   6010 CD 90 60    	CALL	SPACK_A
+014   6013             
+015   6013 21 C0 59    	LD	HL,#5800+32*14
+016   6016 11 C1 59    	LD	DE,#5800+32*14+1
+017   6019 01 1F 01    	LD	BC,32*9-1
+018   601C 36 02       	LD	(HL),2
+019   601E ED B0       	LDIR
+020   6020             
+021   6020             
+022   6020 21 64 64    	LD	HL,GUI
+023   6023 11 00 40    	LD	DE,16384
+024   6026 01 A2 02    	LD	BC,674
+025   6029 ED B0       	LDIR
+026   602B             
+027   602B 01 07 0E    	LD	BC,#0E07
+028   602E 11 52 60    	LD	DE,OLEG
+029   6031 CD F2 60    	CALL	QPRINT
+030   6034 01 0B 10    	LD	BC,#100B
+031   6037 11 65 60    	LD	DE,RERE
+032   603A CD F2 60    	CALL	QPRINT
+033   603D 01 0A 12    	LD	BC,#120a
+034   6040 11 83 60    	LD	DE,ALF
+035   6043 CD F2 60    	CALL	QPRINT
+036   6046 01 07 16    	LD	BC,#1607
+037   6049 11 70 60    	LD	DE,WWW
+038   604C CD F2 60    	CALL	QPRINT
+039   604F             
+040   604F 18 FE       	JR $
+041   6051             
+042   6051 C9          	RET
+043   6052             
+044   6052             OLEG	DB	127," 1997 OLEG ORIGIN",0
+044   6052 7F2031393937204F4C4547204F524947494E00
+045   6065             RERE	DB	"Re-release",0
+045   6065 52652D72656C6561736500
+046   6070             WWW	DB	"www.olegorigin.org",0
+046   6070 7777772E6F6C65676F726967696E2E6F726700
+047   6083             ALF	db 	"ALF  version",0
+047   6083 414C46202076657273696F6E00
+048   6090             
+049   6090 5E          SPACK_A	LD	E,(HL)
+050   6091 7B          	LD	A,E
+051   6092 FE FF       	CP	255
+052   6094 28 39       	JR	Z,SPATR_A
+053   6096 23          	INC	HL
+054   6097 56          	LD	D,(HL)
+055   6098 23          	INC	HL
+056   6099             
+057   6099 E5          	PUSH	HL
+058   609A 7A          	LD	A,D
+059   609B C6 08       SPACKY	ADD	A,8		; (VAR) Y pos
+060   609D             
+061   609D CD 9E 0E    	CALL	3742
+062   60A0 7B          	LD	A,E
+063   60A1 85          	ADD	A,L
+064   60A2 6F          	LD	L,A
+065   60A3             
+066   60A3 EB          	EX	DE,HL
+067   60A4 E1          	POP	HL
+068   60A5             
+069   60A5 7E          	LD	A,(HL)
+070   60A6 23          	INC	HL
+071   60A7 47          	LD	B,A
+072   60A8 D5          SPKA1	PUSH	DE
+073   60A9             
+074   60A9             	DUP 8
+075   60A9 7E          >	LD	A,(HL)
+076   60AA 12          >	LD	(DE),A
+077   60AB 14          >	INC	D
+078   60AC 23          >	INC	HL
+075   60AD 7E          >	LD	A,(HL)
+076   60AE 12          >	LD	(DE),A
+077   60AF 14          >	INC	D
+078   60B0 23          >	INC	HL
+075   60B1 7E          >	LD	A,(HL)
+076   60B2 12          >	LD	(DE),A
+077   60B3 14          >	INC	D
+078   60B4 23          >	INC	HL
+075   60B5 7E          >	LD	A,(HL)
+076   60B6 12          >	LD	(DE),A
+077   60B7 14          >	INC	D
+078   60B8 23          >	INC	HL
+075   60B9 7E          >	LD	A,(HL)
+076   60BA 12          >	LD	(DE),A
+077   60BB 14          >	INC	D
+078   60BC 23          >	INC	HL
+075   60BD 7E          >	LD	A,(HL)
+076   60BE 12          >	LD	(DE),A
+077   60BF 14          >	INC	D
+078   60C0 23          >	INC	HL
+075   60C1 7E          >	LD	A,(HL)
+076   60C2 12          >	LD	(DE),A
+077   60C3 14          >	INC	D
+078   60C4 23          >	INC	HL
+075   60C5 7E          >	LD	A,(HL)
+076   60C6 12          >	LD	(DE),A
+077   60C7 14          >	INC	D
+078   60C8 23          >	INC	HL
+080   60C9             
+081   60C9 D1          	POP	DE
+082   60CA 1C          	INC	E
+083   60CB 10 DB       	DJNZ	SPKA1
+084   60CD 18 C1       	JR	SPACK_A
+085   60CF             
+086   60CF 11 00 59    SPATR_A	LD	DE,#5800+256
+087   60D2 23          	INC	HL
+088   60D3 4E          	LD	C,(HL)
+089   60D4 23          	INC	HL
+090   60D5 46          	LD	B,(HL)
+091   60D6 23          	INC	HL
+092   60D7             
+093   60D7             	; version for width = 32 only
+094   60D7             
+095   60D7 C5          SPKA5	PUSH	BC
+096   60D8 06 04       	LD	B,4
+097   60DA             SPKA6
+098   60DA ED A0       > LDI
+098   60DC ED A0       > LDI
+098   60DE ED A0       > LDI
+098   60E0 ED A0       > LDI
+098   60E2 ED A0       > LDI
+098   60E4 ED A0       > LDI
+098   60E6 ED A0       > LDI
+098   60E8 ED A0       > LDI
+099   60EA 10 EE       	DJNZ	SPKA6
+100   60EC C1          	POP	BC
+101   60ED 10 E8       	DJNZ	SPKA5
+102   60EF C9          	RET
+103   60F0             
+104   60F0             
+105   60F0             SYSFONT	EQU	15616-256
+106   60F0 00 3C       FONT	DEFW	SYSFONT	; place user font address-256 here
+107   60F2             
+108   60F2 1A          QPRINT	LD	A,(DE)
+109   60F3 A7          	AND	A
+110   60F4 C8          	RET	Z
+111   60F5 D5          	PUSH	DE
+112   60F6 CD FD 60    	CALL	PRINTCHAR
+113   60F9 D1          	POP	DE
+114   60FA 13          	INC	DE
+115   60FB 18 F5       	JR	QPRINT
+116   60FD             PRINTCHAR
+117   60FD 08          	EXA
+118   60FE 78          	LD	A,B
+119   60FF CD 9E 0E    	CALL	3742
+120   6102 79          	LD	A,C
+121   6103 85          	ADD	A,L
+122   6104 6F          	LD	L,A
+123   6105 0C          	INC	C
+124   6106 C5          	PUSH	BC
+125   6107 54          	LD	D,H
+126   6108 5D          	LD	E,L
+127   6109 08          	EXA	
+128   610A 6F          	LD	L,A
+129   610B 26 00       	LD	H,0
+130   610D 29          	ADD	HL,HL
+131   610E 29          	ADD	HL,HL
+132   610F 29          	ADD	HL,HL
+133   6110 ED 4B F0 60 	LD	BC,(FONT)
+134   6114 09          	ADD	HL,BC
+135   6115 FE 77       	CP	"w"
+136   6117 28 11       	JR	Z,CHAR_NORMAL
+137   6119 FE 69       	CP	"i"
+138   611B 28 0D       	JR	Z,CHAR_NORMAL
+139   611D FE 49       	CP	"I"
+140   611F 28 13       	JR	Z,CHAR_SPECIAL_I
+141   6121 FE 31       	CP	"1"
+142   6123 28 0F       	JR	Z,CHAR_SPECIAL_I
+143   6125 CD 43 61    	CALL	CHAR_SPECIAL1
+144   6128 C1          RET_I	POP	BC
+145   6129 C9          	RET
+146   612A             
+147   612A             CHAR_NORMAL
+148   612A 06 08       	LD	B,8
+149   612C 7E          PRCHNRM	LD	A,(HL)
+150   612D 12          	LD	(DE),A
+151   612E 14          	INC	D
+152   612F 23          	INC	HL
+153   6130 10 FA       	DJNZ	PRCHNRM
+154   6132 18 F4       	JR	RET_I
+155   6134             
+156   6134             CHAR_SPECIAL_I
+157   6134 3E 0C       	LD	A,00001100b
+158   6136 32 4D 61    	LD	(CHAR_I+1),A
+159   6139 CD 43 61    	CALL	CHAR_SPECIAL1
+160   613C 3E 0F       	LD	A,00001111b
+161   613E 32 4D 61    	LD	(CHAR_I+1),A
+162   6141 18 E5       	JR	RET_I
+163   6143             
+164   6143             CHAR_SPECIAL1
+165   6143 06 08       	LD	B,8
+166   6145 7E          PRCHSP1	LD	A,(HL)
+167   6146 E6 F0       	AND	11110000b
+168   6148 CB 3F       	SRL	A
+169   614A 4F          	LD	C,A
+170   614B 7E          	LD	A,(HL)
+171   614C E6 0F       CHAR_I	AND	00001111b
+172   614E B1          	OR	C
+173   614F 12          	LD	(DE),A
+174   6150 14          	INC	D
+175   6151 23          	INC	HL
+176   6152 10 F1       	DJNZ	PRCHSP1
+177   6154 C9          	RET
+178   6155             
+179   6155             QLOGO
+180   6155             	INCBIN	"res\logo.dat"
+181   6464             
+182   6464             GUI
+183   6464             	INCBIN	"gui.dat"
+184   6706             
+185   6706             	SAVESNA "Get_Dark.sna",PROGRUN
+186   6706             	SAVEBIN "Get_Dark.bin",PROGBEGIN,$-PROGBEGIN
+187   6706             
+
+Value    Label
+------ - -----------------------------------------------------------
+0x6000   PROGBEGIN
+0x6000   PROGRUN
+0x6155   QLOGO
+0x6090   SPACK_A
+0x6464   GUI
+0x6052   OLEG
+0x60F2   QPRINT
+0x6065   RERE
+0x6083   ALF
+0x6070   WWW
+0x60CF   SPATR_A
+0x609B X SPACKY
+0x60A8   SPKA1
+0x60D7   SPKA5
+0x60DA   SPKA6
+0x3C00   SYSFONT
+0x60F0   FONT
+0x60FD   PRINTCHAR
+0x612A   CHAR_NORMAL
+0x6134   CHAR_SPECIAL_I
+0x6143   CHAR_SPECIAL1
+0x6128   RET_I
+0x612C   PRCHNRM
+0x614C   CHAR_I
+0x6145   PRCHSP1

@@ -1,0 +1,198 @@
+;--------------------------------------------------------
+
+; in:	HL = sprite set address
+;	BC = coords
+;	(SPRDIR) = mirror marker
+;--------------------------------------------------------
+
+DRAWSPR	XOR	A
+DRWSPRA	LD	(SPMOD1),A
+	LD	(SPMOD2),A
+
+	EXX
+	LD	HL,SPRBLOCK_NOMIR
+	AND	A		; mode = NOP?
+	JR	NZ,SPRNOP1
+	LD	HL,SPRBLOCK_NOMIR_NOP
+SPRNOP1	LD	DE,#0000	; code of NOP: NOP
+	LD	A,(SPRDIR)
+	AND	A		; CP 0
+	JR	Z,NOMIR1
+	LD	HL,SPRBLOCK_MIR
+	LD	DE,#44ED	; code of NEG (#ED44)
+NOMIR1	LD	(SPMOD3+1),HL
+	LD	(SPMOD5),DE
+	LD	HL,MIRTAB
+	EXX
+
+	LD	A,(SPRMAXY)
+	LD	(SPMOD7+1),A
+
+	PUSH	HL
+	LD	A,(HL)
+	INC	HL
+	AND	A		; если 0 знакомест
+	JP	Z,NOSPR
+
+	PUSH	HL
+	LD	L,A
+	LD	H,0
+	LD	E,L
+	LD	D,H
+	ADD	HL,HL
+	ADD	HL,DE
+	POP	DE
+	ADD	HL,DE
+	EX	DE,HL
+PTBL1	PUSH	AF
+	PUSH	BC
+	LD	A,(HL)
+	INC	HL
+	PUSH	HL
+	ADD	A,B
+SPMOD7	CP	0		; max Y coord (self-mod)
+	JR	NC,PTBL4
+
+	PUSH	DE
+	;--------------------------
+	; like "3742" routine
+	; in: A=Line; out: HL=addr
+	;--------------------------
+	LD	D,A
+	RRCA
+	RRCA
+	RRCA
+	AND	#E0
+	LD	L,A
+	LD	A,D
+	AND	#18
+ADRHI1	OR	#40	; (GLOBAL Self-mod!) scr addr hi
+	LD	H,A
+	;--------------------------
+	POP	DE
+
+	EX	(SP),HL
+	LD	A,(HL)
+	EX	(SP),HL
+
+SPMOD5	NEG			; self-mod NEG / NOP: NOP
+
+	ADD	A,C
+SPXLIM	CP	30		; (mod 32/30 for real/virt)
+	JR	NC,PTBL4
+	ADD	A,L
+	LD	L,A
+	PUSH	HL
+
+SPMOD3	CALL	SPRBLOCK_MIR	; self-mod
+
+	POP	BC		; begin attr section
+	LD	A,B
+	AND	#18
+	SRA	A
+	SRA	A
+	SRA	A
+ADRHI2	ADD	A,#58	; (GLOBAL Self-mod!) attr hi
+	LD	B,A
+	POP	HL
+	LD	A,(SPRCOLR)	; цвет на замену
+	AND	A		; если не 0
+	JR	NZ,SPSETCL	; то используем именно его
+	INC	HL
+	LD	A,(HL)
+	DEC	HL
+SPSETCL	LD	(BC),A		; set color attr
+
+PTBL3	POP	BC
+	POP	AF
+	INC	HL
+	INC	HL
+	DEC	A
+	JR	NZ,PTBL1
+	POP	HL
+	RET
+
+PTBL4	LD	HL,8
+	ADD	HL,DE
+	EX	DE,HL
+	POP	HL
+	JR	PTBL3
+
+NOSPR	EX	DE,HL		; next data -> DE
+	POP	HL
+	RET
+
+SPRBLOCK_NOMIR
+	LD	B,8
+PTBL5	LD	A,(DE)
+SPMOD1	NOP
+	LD	(HL),A
+	INC	DE
+	INC	H
+	DJNZ	PTBL5
+	RET
+
+SPRBLOCK_MIR
+	LD	B,8
+PTBL2	LD	A,(DE)
+	EXX		; в альтернативном HL всегда MIRROR TABLE
+	LD    L,A
+	LD    A,(HL)
+	EXX
+SPMOD2	NOP
+	LD	(HL),A
+	INC	DE
+	INC	H
+	DJNZ	PTBL2
+	RET
+
+SPRBLOCK_NOMIR_NOP
+; частный случай: спрайт не отзеркален, вывод с замещением,
+; используем ускоренный вывод (через DUP и без лишнего NOP)
+	DUP 8
+	LD	A,(DE)
+	LD	(HL),A
+	INC	DE
+	INC	H
+	EDUP
+	RET
+
+;---------------------------------------------------------
+
+
+SPRMAXY	DEFB	24	; (var) Y >= SPRMAXY don't printed
+SPRDIR	DEFB	0	; маркер отзеркаливания
+SPRCOLR	DEFB	0	; цвет на замену (если>0)
+
+SPRPUT	EQU	0
+SPROR	EQU	#B6	; code of  OR (HL)
+SPRAND	EQU	#A6	; code of AND (HL)
+SPRXOR	EQU	#AE	; code of XOR (HL)
+
+;---------------------------------------------------------
+; переключение реального / виртуального экрана
+;---------------------------------------------------------
+
+SETSCREEN_REAL
+	LD	A,32
+	LD	(SPXLIM+1),A
+	LD	A,24
+	LD	(SPRMAXY),A
+	; изменения для процедуры цветных спрайтов
+	LD	A,#40
+	LD	(ADRHI1+1),A
+	LD	A,#58
+	LD	(ADRHI2+1),A
+	RET
+
+SETSCREEN_VIRTUAL
+	LD	A,30
+	LD	(SPXLIM+1),A
+	LD	A,16
+	LD	(SPRMAXY),A
+	; изменения для процедуры цветных спрайтов
+	LD	A,VSCRHI
+	LD	(ADRHI1+1),A
+	LD	A,VATRHI
+	LD	(ADRHI2+1),A
+	RET

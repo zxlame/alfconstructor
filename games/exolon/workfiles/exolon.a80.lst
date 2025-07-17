@@ -1,0 +1,274 @@
+001   0000                     device zxspectrum48
+002   0000                     org #6d60
+003   6D60                     incbin "exolon_2.bin"
+004   0000                     org #6e17
+005   6E17             ;60-8f	y=$0-#78+y
+006   6E17             ;	x=$1+x
+007   6E17             ;90-ce	x=$0-#af+x
+008   6E17             ;	y++
+009   6E17             ;cf-de	$0-#cf=inc+bright*#8
+010   6E17             ;df	y=$1
+011   6E17             ;	x=$2
+012   6E17             ;e0	attr=$1
+013   6E17             ;e1	repeat $1
+014   6E17             ;e2	repeat end
+015   6E17             ;e3	call $2$1
+016   6E17             ;e4	
+017   6E17             ;e5
+018   6E17             ;e6	set font addr $2$1
+019   6E17 E8 01               db #e8,#01
+020   6E19 DF 00 08            db #df,#00,#08
+021   6E1C E3 FF 70            db #e3,#ff,#70
+022   6E1F E6 E0 D7            db #e6,#e0,#d7
+023   6E22 DF 07 07            db #df,#07,#07
+024   6E25 E0 44               db #e0,#44
+025   6E27                     db "BY RAFFAELE CECCO"
+025   6E27 4259205241464641454C4520434543434F
+026   6E38 DF 17 02            db #df,#17,#02
+027   6E3B D9                  db #d9
+028   6E3C                     db "EXOLON COPYRIGHT 1987 HEWSON"
+028   6E3C 45584F4C4F4E20434F50595249474854203139383720484557534F4E
+029   6E58 DF 0D 06            db #df,#0d,#06
+030   6E5B DC                  db #dc
+031   6E5C                     db "PRESS FIRE TO START"
+031   6E5C 5052455353204649524520544F205354415254
+032   6E6F D0                  db #d0
+033   6E70 DF 12 06            db #df,#12,#06
+034   6E73             	db "CURRENT MODE:"
+034   6E73 43555252454E54204D4F44453A
+035   6E80 D8                  db #d8
+036   6E81             	db "BEEPER"        
+036   6E81 424545504552
+037   6E87 FF          smode	db #ff ;#78 ;#ff
+038   6E88                     db #fa,"AY8912",#ff
+038   6E88 FA415938393132FF
+039   6E90             ;ROM detect (6e16)
+040   6E90             	org #6e16
+041   6E16 00          	db 0
+042   6E17             	org #6d64
+043   6D64 AF          	xor a
+044   6D65 CD 4B B0    	call #b04b
+045   6D68 00          > nop
+045   6D69 00          > nop
+045   6D6A 00          > nop
+045   6D6B 00          > nop
+046   6D6C             ;
+047   6D6C             	org #6de0
+048   6DE0 DB 1F       	in a,(#1f)
+049   6DE2 EE A0       	xor #a0
+050   6DE4 CD AB 6F    	call cheat
+051   6DE7 CB 67       	bit 4,a
+052   6DE9 C2 8A 75    	jp nz,#758a
+053   6DEC 5F          	ld e,a
+054   6DED E6 0C       	and #0c
+055   6DEF 7B          	ld a,e
+056   6DF0 20 08       	jr nz,off
+057   6DF2 0B          	dec bc
+058   6DF3 78          	ld a,b
+059   6DF4 B1          	or c
+060   6DF5 CA 49 71    	jp z,#7149
+061   6DF8 18 E3       	jr #6ddd
+062   6DFA             off
+063   6DFA DB 1F       	in a,(#1f)
+064   6DFC EE A0       	xor #a0
+065   6DFE 20 FA       	jr nz,off	
+066   6E00 3A 16 6E    	ld a,(#6e16)
+067   6E03 EE 79       	xor #79
+068   6E05 32 16 6E    	ld (#6e16),a
+069   6E08 3D          	dec a
+070   6E09 32 87 6E    	ld (smode),a
+071   6E0C CD 4B B0    	call #b04b
+072   6E0F C3 A7 6D    	jp #6da7
+073   6E12             ;kempston
+074   6E12             	org #7b97
+075   7B97 02          	db 2
+076   7B98             ;music key
+077   7B98             	org #7d23
+078   7D23 DB 1F       	in a,(#1f)
+079   7D25 EE A0       	xor #a0
+080   7D27 00          	nop
+081   7D28 00          	nop
+082   7D29             ;highlight control
+083   7D29             	org #6f90
+084   6F90 C9          	ret
+085   6F91             	org #6dbf
+086   6DBF 00          	nop
+087   6DC0 00          	nop
+088   6DC1             ;key input
+089   6DC1             	org #acd1
+090   ACD1 DB 1F       	in a,(#1f)
+091   ACD3 EE A0         	xor #a0
+092   ACD5 C9          	ret
+093   ACD6             ;no key
+094   ACD6             	org #ad18
+095   AD18             nokey
+096   AD18 DB 1F       	in a,(#1f)
+097   AD1A EE A0       	xor #a0
+098   AD1C 20 FA       	jr nz,nokey
+099   AD1E C9          	ret
+100   AD1F 00          	ds #ad21-$
+101   AD21             ;pause
+102   AD21             	org #ad21
+103   AD21             pause
+104   AD21 DB 1F       	in a,(#1f)
+105   AD23 CB 77       	bit 6,a
+106   AD25 C8          	ret z
+107   AD26 CB 7F       	bit 7,a
+108   AD28 CA 60 6D    	jp z,#6d60
+109   AD2B CD 5E B7    	call #b75e	;mute
+110   AD2E 00          	ds #ad30-$
+111   AD30             ;highscore
+112   AD30             	org #a0ee
+113   A0EE             loop
+114   A0EE DB 1F       	in a,(#1f)
+115   A0F0 EE A0       	xor #a0
+116   A0F2 20 FA       	jr nz,loop
+117   A0F4             loop2
+118   A0F4 DB 1F       	in a,(#1f)
+119   A0F6 EE A0       	xor #a0
+120   A0F8 28 FA       	jr z,loop2
+121   A0FA CB 67       	bit 4,a
+122   A0FC 28 09       	jr z,.s1
+123   A0FE 7B          	ld a,e
+124   A0FF FE 13       	cp #13
+125   A101 28 2E       	jr z,#a131
+126   A103 23          	inc hl
+127   A104 1C          	inc e
+128   A105 18 1A       	jr .prn
+129   A107             .s1
+130   A107 CB 5F       	bit 3,a
+131   A109 28 0A       	jr z,.s2
+132   A10B 3E 5A       	ld a,"Z"
+133   A10D BE          	cp (hl)
+134   A10E 20 02       	jr nz,.l1
+135   A110 36 1F       	ld (hl),#1f
+136   A112             .l1
+137   A112 34          	inc (hl)
+138   A113 18 0C       	jr .prn
+139   A115             .s2
+140   A115 CB 57       	bit 2,a
+141   A117 28 D5       	jr z,loop
+142   A119 35          	dec (hl)
+143   A11A 7E          	ld a,(hl)
+144   A11B FE 1F       	cp " "-1
+145   A11D 20 02       	jr nz,.l2
+146   A11F 36 5A       	ld (hl),"Z"
+147   A121             .l2	
+148   A121             .prn
+149   A121 7E          	ld a,(hl)
+150   A122 0E 46       	ld c,#46
+151   A124 CD E1 AD    	call #ade1
+152   A127 18 C5       	jr loop
+153   A129             
+154   A129             
+155   A129             
+156   A129             
+157   A129             
+158   A129             
+159   A129             
+160   A129             
+161   A129             
+162   A129             
+163   A129             
+164   A129             ; score
+165   A129             ; 	bit 4,a
+166   A129             ; 	jr nz,#a131
+167   A129             ; 	rra
+168   A129             ; 	jr nc,.s1
+169   A129             ; 	ld a,e
+170   A129             ; 	cp #0c
+171   A129             ; 	jr z,loop
+172   A129             ; 	dec hl
+173   A129             ; 	dec e
+174   A129             ; 	xor a
+175   A129             ; .s1
+176   A129             ; 	rra
+177   A129             ; 	jr nc,.s2
+178   A129             ; 	ld a,e
+179   A129             ; 	cp #13
+180   A129             ; 	jr z,#a0de
+181   A129             ; 	inc hl
+182   A129             ; 	inc e
+183   A129             ; 	xor a
+184   A129             ; .s2
+185   A129             ; 	rra
+186   A129             ; 	jr nc,.s3
+187   A129             ; 	ld a,"Z"
+188   A129             ; 	cp (hl)
+189   A129             ; 	jr nz,.l1
+190   A129             ; 	ld (hl),#1f
+191   A129             ; .l1
+192   A129             ; 	inc (hl)
+193   A129             ; 	jr .prn
+194   A129             ; .s3
+195   A129             ; 	rra
+196   A129             ; 	jr nc,loop
+197   A129             ; 	dec (hl)
+198   A129             ; 	ld a,(hl)
+199   A129             ; 	cp " "-1
+200   A129             ; 	jr nz,.l2
+201   A129             ; 	ld (hl),"Z"
+202   A129             ; .l2	
+203   A129             ; .prn
+204   A129             ; 	ld a,(hl)
+205   A129             ; 	ld c,#46
+206   A129             ; 	call #ade1
+207   A129             ; 	jr loop
+208   A129             	display $
+209   A129             ;6fab redefine
+210   A129             	org #6fab
+211   6FAB             cheat
+212   6FAB F5          	push af
+213   6FAC FE 81       	cp %10000001
+214   6FAE 3A 1D 9D    	ld a,(#9d1d)
+215   6FB1 20 0E       	jr nz,.l1
+216   6FB3 EE 3D       	xor #3d
+217   6FB5 32 1D 9D    	ld (#9d1d),a
+218   6FB8             .off
+219   6FB8 DB 1F       	in a,(#1f)
+220   6FBA EE A0       	xor #a0
+221   6FBC 20 FA       	jr nz,.off	
+222   6FBE 3A 1D 9D    	ld a,(#9d1d)
+223   6FC1             .l1
+224   6FC1 D6 3D       	sub #3d
+225   6FC3 9F          	sbc a
+226   6FC4 E6 01       	and #01
+227   6FC6 D3 FE       	out (#fe),a
+228   6FC8 F1          	pop af
+229   6FC9 C9          	ret
+230   6FCA             sndcheck
+231   6FCA 3A 16 6E    	ld a,(#6e16)
+232   6FCD B7          	or a
+233   6FCE C8          	ret z
+234   6FCF AF          	xor a
+235   6FD0 32 EA C5    	ld (#c5ea),a
+236   6FD3 C3 82 BF    	jp #bf82
+237   6FD6             	display #70fb-$
+238   6FD6 00          	ds #70fb-$
+239   70FB             ;7b4a kempston in game
+240   70FB             ;bf7e
+241   70FB             	org #bf7e
+242   BF7E C3 CA 6F    	jp sndcheck
+243   BF81             	savebin "exolon.bin",#6d60,#92a0
+exolon.a80(244): warning: [SAVESNA] RAM <0x4000-0x4001> will be overriden due to 48k snapshot imperfect format.
+244   BF81                     savesna "exolon.sna",#6d60
+245   BF81             ;len 92a0
+246   BF81             ; font d7e0
+
+Value    Label
+------ - -----------------------------------------------------------
+0x6E87   smode
+0x6FAB   cheat
+0x6DFA   off
+0xAD18   nokey
+0xAD21 X pause
+0xA0EE   loop
+0xA0F4   loop2
+0xA107   loop2.s1
+0xA121   loop2.prn
+0xA115   loop2.s2
+0xA112   loop2.l1
+0xA121   loop2.l2
+0x6FC1   cheat.l1
+0x6FB8   cheat.off
+0x6FCA   sndcheck

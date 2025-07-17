@@ -1,0 +1,192 @@
+;-------------------------------------
+; Test for FIRE pressed
+;-------------------------------------
+
+FIREPRESSED
+	CALL	KBDJOY
+	BIT	4,A	; NZ = fire 
+	RET
+
+;-------------------------------------
+; Test for FIRE release
+;-------------------------------------
+
+FIRERELEASE
+	EI			; HALT with disabled INT = crash
+	CALL	FIRERELEASE1
+	HALT
+	CALL	FIRERELEASE1	; for keyboard anti-bounce
+	HALT
+	CALL	FIRERELEASE1	; for keyboard anti-bounce
+	RET
+FIRERELEASE1
+	CALL	FIREPRESSED
+	JR	NZ,FIRERELEASE1
+	RET
+
+;-------------------------------------
+; Wait for FIRE pressed in loop.
+; (Аnd first, wait for Fire released
+; if already pressed.)
+;-------------------------------------
+
+FIREPRESSLOOP
+	CALL	FIRERELEASE	; first, wait for fire relese
+FPRLOO1	CALL	FIREPRESSED
+	JR	Z,FPRLOO1	; if not fire pressed
+	RET
+
+KBDJOY	
+	in a,(#1f)
+	xor #a0
+	LD	(P1CTRL),A
+	ret
+P1CTRL	DEFB 0
+;-------------------------------------
+; Key test routine
+;-------------------------------------
+/*
+KTEST	LD	C,A	; key to test in C
+	AND	7	; mask bits 0..2 for row
+	INC	A	; in range 1..8
+	LD	B,A	; place in B
+	SRL	C	; C div 8 (find pos within row)
+	SRL	C
+	SRL	C
+	LD	A,5	; only 5 keys per row
+	SUB	C	; subtract pos
+	LD	C,A	; put in C
+	LD	A,254	; high byte of port to read
+KTEST2	RRCA		; rotate into position
+	DJNZ	KTEST2	; repeat until found relevant row
+	IN	A,(254)	; read port (A=high, 254=low)
+KTEST1	RRA		; rotate bit out of result
+	DEC	C	; loop counter, repeat
+	JP   NZ,KTEST1	; until bit for position in carry
+	RET
+
+
+; Joystick and keyboard reading routines.
+
+KBDJOY	LD	A,(P1CTRLTYPE)	; control type for Player 1
+	CALL	KJREAD		; read kbd/joy for Player 1
+	LD	(P1CTRL),A	; store
+	RET
+
+KJREAD	LD	IX,KEYCURS	; data for cursor/extra key
+	CP	2
+	JR	Z,JOYKEMP
+	CP	1
+	JR	Z,JOYSIN1
+	CP	3
+	JR	Z,GETKEYS	; cursor
+
+; keyboard / key-joystick controls
+
+	LD	IX,KEYUSER	; keyboard
+GETKEYS	LD	E,0
+	LD	A,(IX+4); fire key.
+	CALL	KTEST
+	CCF		; complement the carry
+	RL	E	; rotate into E
+	LD	A,(IX)	; up key
+	CALL	KTEST
+	CCF		; complement the carry
+	RL	E	; rotate into E
+	LD	A,(IX+1); down key.
+	CALL	KTEST
+	CCF		; complement the carry
+	RL	E	; rotate into E
+	LD	A,(IX+2); left key
+	CALL	KTEST
+	CCF		; complement the carry
+	RL	E	; rotate into bit 0 of E
+	LD	A,(IX+3); right key
+	CALL	KTEST
+	CCF		; complement the carry
+	RL	E	; destined for bit 1 of E
+	LD	A,E	; place result in accumulator
+
+READPAUSEKEY
+	LD	E,A	; just store A
+	LD	A,(IX+5); pause key
+	CALL	KTEST
+	LD	A,E	; restore
+	RET	C
+	SET	5,A
+	RET
+
+; Kempston joystick controls.
+
+JOYKEMP	LD	BC,31	; port for Kempston joystick
+	IN	A,(C)
+	JR	READPAUSEKEY
+
+; Sinclair joystick controls.
+
+; 61438 (#EFFE) is port for Sinclair Interface 2 joystick 1 (Right)
+; 63486 (#F7FE) is port for Sinclair Interface 2 joystick 2 (Left)
+; для второго синклер-джойстика (левого) биты в обратном порядке,
+; поэтому для обоих джойстиков применяем таблицы направлений
+
+;-- JOYSIN2 LD	BC,63486	; port for Sinclair Left
+;--	LD	HL,SINCL2TABLE
+;--	JR	JOYSIN
+
+JOYSIN1	LD	BC,61438	; port for Sinclair Right
+JOYSIN	IN	A,(C)	; read joystick
+	LD	D,A	; clear values
+	XOR	A	; clear accumulator
+	LD	E,16
+	BIT	0,D	; Fire(S1)/Left(S2)?
+	CALL	Z,JOYS0	; add bit
+	LD	E,8
+	BIT	1,D	; Up(S1)/Right(S2)?
+	CALL	Z,JOYS0	; add bit
+	LD	E,4
+	BIT	2,D	; Down(S1 and S2)?
+	CALL	Z,JOYS0	; add bit
+	LD	E,1
+	BIT	3,D	; Right(S1)/Up(S2)?
+	CALL	Z,JOYS0	; add bit
+	LD	E,2
+	BIT	4,D	; Left(S1)/Fire(S2)?
+	CALL	Z,JOYS0	; add bit
+	JR	READPAUSEKEY
+
+JOYS0	ADD	A,E	; add bit value.
+	RET
+
+; control type (keyboard/joysticks) for player 1 / player 2
+
+P1CTRLTYPE	DEFB -1
+
+; 0 = KEYBOARD
+; 1 = SINCLAIR 1 (RIGHT)
+; 2 = KEMPSTON
+; 3 = CURSOR
+
+; keyboard/joystick curent value(s) for player 1 / player 2
+
+P1CTRL	DEFB 0
+
+; Keys: up, down, left, right, fire, then additional keys.
+
+KEYCURS	DEFB 11,03,04,19,35, 32	; cursor keys+Map
+KEYUSER	DEFB 37,38,26,34,16, 32	; user keys (default is QAOPM+Sp)
+
+; Keypress codes
+; -----------------------------
+;  1  2  3  4  5  6  7  8  9  0
+; 36 28 20 12 04 03 11 19 27 35
+; -----------------------------
+;  Q  W  E  R  T  Y  U  I  O  P
+; 37 29 21 13 05 02 10 18 26 34
+; -----------------------------
+;  A  S  D  F  G  H  J  K  L en
+; 38 30 22 14 06 01 09 17 25 33
+; -----------------------------
+; cs  Z  X  C  V  B  N  M ss bs
+; 39 31 23 15 07 00 08 16 24 32
+; -----------------------------
+*/
