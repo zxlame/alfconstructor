@@ -1,0 +1,4 @@
+; Xpeccy deBUGa breakpoints list
+RAM:00:280A:F:DBG
+RAM:00:28C2:F:DBG
+RAM:00:29CF:F:DBG
